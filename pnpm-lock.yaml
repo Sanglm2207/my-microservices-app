@@ -19,6 +19,9 @@ importers:
       auth-client:
         specifier: workspace:*
         version: link:../../packages/auth-client
+      common-types:
+        specifier: workspace:^
+        version: link:../../packages/common-types
       cookie-parser:
         specifier: ^1.4.6
         version: 1.4.6
@@ -123,21 +126,27 @@ importers:
 
   apps/user-service:
     dependencies:
-      cache:
-        specifier: workspace:*
-        version: link:../../packages/cache
+      '@types/cors':
+        specifier: ^2.8.17
+        version: 2.8.17
       common-types:
         specifier: workspace:*
         version: link:../../packages/common-types
-      database:
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      document-store:
         specifier: workspace:*
-        version: link:../../packages/database
+        version: link:../../packages/document-store
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
       express:
         specifier: ^4.18.2
         version: 4.18.2
+      tsconfig:
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
     devDependencies:
       '@types/express':
         specifier: ^4.17.21
@@ -148,9 +157,6 @@ importers:
       ts-node-dev:
         specifier: ^2.0.0
         version: 2.0.0(@types/node@20.10.4)(typescript@5.9.2)
-      tsconfig:
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       typescript:
         specifier: ^5.3.3
         version: 5.9.2
@@ -513,7 +519,6 @@ packages:
     resolution: {integrity: sha512-8CGDvrBj1zgo2qE+oS3pOCyYNqCPryMWY2bGfwA0dcfopWGgxs+78df0Rs3rc9THP4JkOhLsAa+15VdpAqkcUA==}
     dependencies:
       '@types/node': 20.10.4
-    dev: true
 
   /@types/estree@1.0.8:
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}

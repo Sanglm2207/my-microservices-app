@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes';
 
-const router = Router();
+const router: Router = Router();
 
 // Tất cả các route liên quan đến auth sẽ có prefix /auth
 router.use('/auth', authRoutes);

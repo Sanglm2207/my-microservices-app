@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/auth-client" },
+    { "path": "packages/cache" },
+    { "path": "packages/common-types" },
+    { "path": "packages/database" },
+    { "path": "packages/document-store" },
+    { "path": "apps/api-gateway" },
+    { "path": "apps/auth-service" },
+    { "path": "apps/user-service" }
+  ]
+}

@@ -3,7 +3,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import config from '../config';
 
-const router = Router();
+const router: Router = Router();
 
 // Định nghĩa các service và target của chúng
 const services = [

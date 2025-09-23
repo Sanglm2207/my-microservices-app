@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "build": "tsc --build",
     "db:migrate": "dotenv -e .env -- prisma migrate dev --schema=../../packages/database/prisma/schema.prisma",
     "db:generate": "dotenv -e .env -- prisma generate --schema=../../packages/database/prisma/schema.prisma",
     "db:studio": "dotenv -e .env -- prisma studio --schema=../../packages/database/prisma/schema.prisma"

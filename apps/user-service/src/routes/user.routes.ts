@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as userController from '../controllers/user.controller';
 
-const router = Router();
+const router: Router = Router();
 
 // Lấy thông tin profile của user đang đăng nhập
 router.get('/me', userController.getMyProfile);

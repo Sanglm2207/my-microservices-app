@@ -1,7 +1,11 @@
 {
   "extends": "tsconfig/base.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist" // Thêm outDir nếu chưa có
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    { "path": "../../packages/common-types" },
+    { "path": "../../packages/auth-client" }
+  ]
 }
