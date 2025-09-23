@@ -3,5 +3,12 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    { "path": "../../packages/common-types" },
+    { "path": "../../packages/database" },
+    { "path": "../../packages/cache" },
+    { "path": "../../packages/validation" },
+    { "path": "../../packages/middlewares" }
+  ]
 }

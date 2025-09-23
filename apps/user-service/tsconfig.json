@@ -1,11 +1,13 @@
 {
   "extends": "tsconfig/base.json",
   "compilerOptions": {
-    "outDir": "dist" // Thêm outDir nếu chưa có
+    "outDir": "dist"
   },
   "include": ["src"],
   "references": [
+    { "path": "../../packages/common-types" },
     { "path": "../../packages/document-store" },
-    { "path": "../../packages/common-types" }
+    { "path": "../../packages/validation" },
+    { "path": "../../packages/middlewares" }
   ]
 }

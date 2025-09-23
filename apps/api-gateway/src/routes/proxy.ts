@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import config from '../config';
+import { checkRole } from '../middlewares/checkRole';
 
 const router: Router = Router();
 
@@ -36,7 +37,8 @@ router.use(
 // Ví dụ: /api/v1/users/me
 router.use(
     services[1].route, // /users
-    authMiddleware, // Áp dụng middleware xác thực tại đây!
+    authMiddleware,
+    checkRole(['ADMIN', 'USER']),
     createProxyMiddleware({
         target: services[1].target,
         changeOrigin: true,

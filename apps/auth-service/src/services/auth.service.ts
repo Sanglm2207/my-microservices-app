@@ -1,4 +1,4 @@
-import { prisma, User } from 'database';
+import { prisma, User, Role } from 'database';
 import { redisClient } from 'cache';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -43,8 +43,8 @@ export const validateUser = async (
  * Tạo Access Token và Refresh Token
  */
 export const generateTokens = (user: User) => {
-    const accessTokenPayload = { userId: user.id };
-    const refreshTokenPayload = { userId: user.id, version: 1 }; // Có thể thêm version để vô hiệu hóa hàng loạt
+    const accessTokenPayload = { userId: user.id, role: user.role };
+    const refreshTokenPayload = { userId: user.id, version: 1 }; //  add version for token invalidation if needed
 
     const accessToken = jwt.sign(accessTokenPayload, config.jwt.accessTokenSecret, {
         expiresIn: config.jwt.accessTokenExpiresIn,

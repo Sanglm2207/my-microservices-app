@@ -7,12 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+   USER
+   ADMIN
+}
+
 // Model cho auth-service
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
   name      String?
+  role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
