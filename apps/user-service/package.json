@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
+    "axios": "^1.12.2",
     "common-types": "workspace:*",
     "cors": "^2.8.5",
     "document-store": "workspace:*",

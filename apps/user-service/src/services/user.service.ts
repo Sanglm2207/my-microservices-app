@@ -1,5 +1,6 @@
-
 import { UserProfileModel } from '../models/user.model';
+import axios from 'axios';
+import config from '../config';
 
 interface UserProfileUpdatePayload {
     name?: string;
@@ -10,19 +11,27 @@ interface UserProfileUpdatePayload {
 /**
  * Lấy hoặc tạo mới hồ sơ người dùng.
  * @param userId - ID người dùng từ header (do API Gateway cung cấp).
- * @param userEmail - Email người dùng (giả sử Gateway cũng cung cấp).
  * @returns Hồ sơ người dùng.
  */
-export const findOrCreateUserProfile = async (userId: string, userEmail: string) => {
+export const findOrCreateUserProfile = async (userId: string) => {
     let userProfile = await UserProfileModel.findById(userId).exec();
 
     if (!userProfile) {
-        // Nếu chưa có profile, tạo một profile mới với thông tin cơ bản
-        userProfile = await UserProfileModel.create({
-            _id: userId,
-            email: userEmail,
-            name: `User_${userId.substring(0, 6)}`, // Tên mặc định
-        });
+        try {
+            // Gọi đến auth-service để lấy thông tin cơ bản
+            const response = await axios.get(`${config.authServiceInternalUrl}/users/${userId}`);
+            const { email, name } = response.data;
+
+            userProfile = await UserProfileModel.create({
+                _id: userId,
+                email: email,
+                name: name || `User_${userId.substring(0, 6)}`,
+            });
+        } catch (error) {
+            console.error("Failed to fetch user data from auth-service", error);
+            // Nếu auth-service bị lỗi, vẫn tạo profile cơ bản
+            userProfile = await UserProfileModel.create({ _id: userId, email: 'unknown@service.error' });
+        }
     }
 
     return userProfile;

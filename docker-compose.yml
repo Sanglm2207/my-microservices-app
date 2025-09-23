@@ -1,5 +1,55 @@
 version: '3.8'
 services:
+  # --- APPS ---
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    command: node apps/api-gateway/dist/index.js
+    ports:
+      - '4000:4000'
+    env_file:
+      - ./apps/api-gateway/.env
+    environment:
+      # Ghi đè URL để các service có thể nói chuyện với nhau qua tên container
+      AUTH_SERVICE_URL: http://auth-service:4001
+      USER_SERVICE_URL: http://user-service:4002
+    depends_on:
+      - auth-service
+      - user-service
+    restart: always
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth-service
+    command: node apps/auth-service/dist/index.js
+    ports:
+      - '4001:4001'
+    env_file:
+      - ./apps/auth-service/.env
+    depends_on:
+      - mysql_auth
+      - redis_cache
+    restart: always
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-service
+    command: node apps/user-service/dist/index.js
+    ports:
+      - '4002:4002'
+    env_file:
+      - ./apps/user-service/.env
+    depends_on:
+      - mongodb_user
+    restart: always
+
+  # --- DATABASES ---
   mysql_auth:
     image: mysql:8.0
     container_name: mysql_auth_db

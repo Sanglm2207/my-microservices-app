@@ -12,6 +12,9 @@ const config = {
 
     // Lấy địa chỉ của client được phép truy cập (API Gateway)
     corsOrigin: process.env.CORS_ORIGIN || '*',
+
+    // api internal
+    authServiceInternalUrl: process.env.AUTH_SERVICE_INTERNAL_URL as string,
 };
 
 // Kiểm tra các biến môi trường quan trọng. Nếu thiếu, dừng server ngay lập tức.

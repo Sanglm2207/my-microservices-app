@@ -6,6 +6,7 @@
   "include": ["src"],
   "references": [
     { "path": "../../packages/common-types" },
-    { "path": "../../packages/auth-client" }
+    { "path": "../../packages/auth-client" },
+    { "path": "../../packages/middlewares" }
   ]
 }

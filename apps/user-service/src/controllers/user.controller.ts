@@ -15,11 +15,8 @@ export const getMyProfile = async (req: Request, res: Response) => {
         return res.status(401).json({ message: 'User ID not found in request headers.' });
     }
 
-    // Giả sử email cũng được gửi từ Gateway, hoặc ta phải gọi auth-service để lấy
-    const userEmail = req.headers['x-user-email'] as string || 'unknown@example.com';
-
     try {
-        const userProfile = await userService.findOrCreateUserProfile(userId, userEmail);
+        const userProfile = await userService.findOrCreateUserProfile(userId);
         res.status(200).json(userProfile);
     } catch (error) {
         console.error(error);
