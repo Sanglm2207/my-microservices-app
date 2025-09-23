@@ -1,0 +1,11 @@
+{
+  "watch": [
+    "src",
+    "../../packages/common-types/dist",
+    "../../packages/document-store/dist",
+    "../../packages/validation/dist",
+    "../../packages/middlewares/dist"
+  ],
+  "exec": "ts-node-dev --respawn --transpile-only src/index.ts",
+  "ext": "ts,json"
+}

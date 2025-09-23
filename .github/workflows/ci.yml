@@ -1,0 +1,49 @@
+name: CI Pipeline
+
+# Trigger workflow khi có push hoặc pull request đến branch `main`
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  build_and_test:
+    name: Build & Test
+    runs-on: ubuntu-latest # Chạy trên máy ảo Ubuntu mới nhất
+
+    steps:
+      # Step 1: Checkout code từ repository
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Step 2: Cài đặt pnpm
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      # Step 3: Cài đặt Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm' # Cache lại dependencies để các lần chạy sau nhanh hơn
+
+      # Step 4: Cài đặt dependencies của project
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Step 5: Chạy Lint
+      # Turbo sẽ tự động cache kết quả. Nếu không có file nào thay đổi, bước này sẽ hoàn thành ngay lập tức.
+      - name: Run Lint
+        run: pnpm turbo lint
+
+      # Step 6: Chạy Build
+      # Cần build trước khi chạy test để đảm bảo tất cả code JS đã được tạo ra
+      - name: Run Build
+        run: pnpm turbo build
+
+      # Step 7: Chạy Tests
+      - name: Run Tests
+        run: pnpm test
