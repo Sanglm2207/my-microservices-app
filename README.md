@@ -1,135 +1,142 @@
-# Turborepo starter
+# Monorepo Backend Microservices with Node.js & Turborepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+![Node.js](https://img.shields.io/badge/Node.js-18.x-339933?style=for-the-badge&logo=node.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript)
+![Turborepo](https://img.shields.io/badge/Turborepo-v2.x-6F39B6?style=for-the-badge&logo=turborepo)
+![Docker](https://img.shields.io/badge/Docker-20.10-2496ED?style=for-the-badge&logo=docker)
+![Prisma](https://img.shields.io/badge/Prisma-5.x-2D3748?style=for-the-badge&logo=prisma)
+![pnpm](https://img.shields.io/badge/pnpm-8.x-F69220?style=for-the-badge&logo=pnpm)
 
-## Using this example
+Một bộ khung backend hoàn chỉnh được xây dựng theo kiến trúc microservice, quản lý dưới dạng monorepo sử dụng Turborepo. Project này bao gồm một hệ thống xác thực đầy đủ với JWT (Access & Refresh Token), phân quyền theo vai trò (RBAC), và được đóng gói bằng Docker.
 
-Run the following command:
+## ✨ Các tính năng nổi bật
 
-```sh
-npx create-turbo@latest
+- **Kiến trúc Monorepo:** Quản lý code tập trung, dễ dàng chia sẻ và tái sử dụng logic với `pnpm workspaces`.
+- **Tối ưu hóa Build System:** Tăng tốc độ build, test, và lint nhờ vào caching của `Turborepo`.
+- **Microservices:**
+  - `api-gateway`: Cổng vào duy nhất, chịu trách nhiệm xác thực, rate limiting, và điều hướng request.
+  - `auth-service`: Xử lý đăng ký, đăng nhập, JWT, refresh token, và quản lý người dùng.
+  - `user-service`: Quản lý thông tin hồ sơ (profile) của người dùng.
+- **Xác thực an toàn:** Luồng xác thực sử dụng `httpOnly` cookie để lưu trữ token, giúp chống lại tấn công XSS.
+- **Polyglot Persistence:** Sử dụng đúng database cho đúng nhu cầu:
+  - **MySQL (Prisma):** Cho `auth-service` với dữ liệu có cấu trúc chặt chẽ.
+  - **MongoDB (Mongoose):** Cho `user-service` với dữ liệu profile linh hoạt.
+  - **Redis:** Dùng để caching và blacklist token.
+- **Sẵn sàng cho Production:**
+  - **Containerization:** Toàn bộ hệ thống (apps & databases) được đóng gói và quản lý bởi `Docker` và `docker-compose`.
+  - **Validation:** Xác thực dữ liệu đầu vào một cách an toàn với `Zod`.
+  - **RBAC:** Hệ thống phân quyền theo vai trò (`USER`, `ADMIN`).
+  - **Logging tập trung:** Sử dụng `Pino` để tạo log dạng JSON có cấu trúc.
+  - **API Documentation:** Tự động tạo tài liệu API tương tác với `Swagger (OpenAPI)`.
+- **Quy trình phát triển chuyên nghiệp:** Cung cấp script `manage.sh` để tự động hóa các tác vụ phổ biến.
+
+## 🏛️ Sơ đồ Kiến trúc
+
+## 🚀 Bắt đầu
+
+### Yêu cầu
+
+- [Node.js](https://nodejs.org/) (v18.x trở lên)
+- [pnpm](https://pnpm.io/) (v8.x trở lên)
+- [Docker](https://www.docker.com/) và `docker-compose`
+
+### Cài đặt
+
+1.  **Clone repository:**
+
+    ```bash
+    git clone https://github.com/Sanglm2207/my-microservices-app.git
+    cd my-microservices-app
+    ```
+
+2.  **Thiết lập file môi trường `.env`:**
+    Sao chép các file `.env.example` thành `.env` trong từng thư mục service và điền các giá trị cần thiết.
+
+    ```bash
+    cp apps/api-gateway/.env.example apps/api-gateway/.env
+    cp apps/auth-service/.env.example apps/auth-service/.env
+    cp apps/user-service/.env.example apps/user-service/.env
+    ```
+
+    **Quan trọng:** Đảm bảo `ACCESS_TOKEN_SECRET` trong `.env` của `api-gateway` và `auth-service` phải giống hệt nhau.
+
+3.  **Cài đặt dependencies:**
+
+    ```bash
+    pnpm install
+    ```
+
+4.  **Khởi tạo Database:**
+    - Đầu tiên, khởi động các container database:
+      ```bash
+      docker-compose up -d mysql_auth redis_cache mongodb_user
+      ```
+    - Chạy database migration để tạo các bảng cần thiết:
+      ```bash
+      ./manage.sh db:migrate
+      ```
+
+### Chạy ứng dụng
+
+Chúng tôi cung cấp một script `manage.sh` để đơn giản hóa các tác vụ. Cấp quyền thực thi cho nó nếu cần: `chmod +x manage.sh`.
+
+- **Chạy ở chế độ Development (Hot-reloading):**
+  ```bash
+  ./manage.sh dev
+  ```
+
+### Các service sẽ chạy tại:
+
+API Gateway: http://localhost:4000
+Auth Service: http://localhost:4001 (API Docs: http://localhost:4001/api-docs)
+User Service: http://localhost:4002 (API Docs: http://localhost:4002/api-docs)
+Chạy bằng Docker (Môi trường giống Production):
+
+```bash
+docker-compose up --build
 ```
 
-## What's inside?
+Lệnh này sẽ build image và khởi động tất cả các service và database.
 
-This Turborepo includes the following packages/apps:
+### 🛠️ Các lệnh hữu ích (qua manage.sh)
 
-### Apps and Packages
+./manage.sh dev <service-name>: Chạy một service cụ thể (ví dụ: api-gateway).
+./manage.sh build: Build tất cả các app và package.
+./manage.sh build:libs: Chỉ build các thư viện trong packages/.
+./manage.sh lint: Chạy ESLint cho toàn bộ project.
+./manage.sh test: Chạy Unit Test.
+./manage.sh clean: Dọn dẹp project (xóa node_modules, dist, .turbo,...).
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### 📦 Cấu trúc Monorepo
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+apps/: Chứa code của các microservice. Mỗi service là một ứng dụng độc lập.
+packages/: Chứa code dùng chung (thư viện).
+auth-client: Logic xác thực JWT.
+cache: Client kết nối Redis.
+common-types: Các interface và type TypeScript dùng chung.
+database: Prisma client và schema.
+document-store: Mongoose client.
+logger: Logger Pino cấu hình sẵn.
+middlewares: Các middleware Express dùng chung (validation, error handling).
+swagger-docs: Logic tạo tài liệu Swagger.
+tsconfig: Cấu hình TypeScript gốc.
 
-### Utilities
+## 📜 Giấy phép
 
-This Turborepo has some additional tools already setup for you:
+Project này được cấp phép dưới [Giấy phép MIT](LICENSE).
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+---
 
-### Build
+## 📬 Liên hệ & Đóng góp
 
-To build all apps and packages, run the following command:
+Cảm ơn bạn đã xem qua project này! Mọi ý tưởng đóng góp, báo lỗi, hoặc câu hỏi đều được chào đón. Vui lòng tạo một [Issue](https://github.com/Sanglm2207/my-microservices-app/issues) hoặc [Pull Request](https://github.com/Sanglm2207/my-microservices-app/pulls).
 
-```
-cd my-turborepo
+Kết nối với tôi qua các kênh sau:
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+[![Github](https://img.shields.io/badge/GitHub-Sanglm2207-181717?style=for-the-badge&logo=github)](https://github.com/sanglm2207)
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Sanglm2207-0A66C2?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/kaidev99/)
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+[![Facebook](https://img.shields.io/badge/Facebook-kaidev99-1877F2?style=for-the-badge&logo=facebook)](https://www.facebook.com/kaidev99)
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+[![Email](https://img.shields.io/badge/Email-sanglm2207@gmail.com-D14836?style=for-the-badge&logo=gmail)](mailto:sanglm2207@gmail.com)

@@ -9,6 +9,8 @@
     { "path": "../../packages/database" },
     { "path": "../../packages/cache" },
     { "path": "../../packages/validation" },
-    { "path": "../../packages/middlewares" }
+    { "path": "../../packages/middlewares" },
+    { "path": "../../packages/logger"},
+    { "path": "../../packages/swagger-docs" }
   ]
 }

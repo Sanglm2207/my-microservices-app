@@ -1,8 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import logger from 'logger';
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error(err); // Log lỗi đầy đủ
+    logger.error(
+        {
+            err, // Log toàn bộ đối tượng lỗi
+            request: {
+                method: req.method,
+                url: req.originalUrl,
+                ip: req.ip,
+            },
+        },
+        'An unhandled error occurred in errorHandler'
+    );
 
     if (err instanceof ZodError) {
         const errorMessages = err.errors.map((e) => e.message).join(', ');
