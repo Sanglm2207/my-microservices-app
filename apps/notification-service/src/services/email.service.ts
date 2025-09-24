@@ -37,3 +37,33 @@ export const sendWelcomeEmail = async (payload: WelcomeEmailPayload): Promise<vo
         logger.error({ error, recipient: to }, 'Failed to send welcome email');
     }
 };
+
+export interface ResetPasswordEmailPayload {
+    to: string;
+    name: string | null;
+    resetLink: string;
+}
+
+export const sendPasswordResetEmail = async (payload: ResetPasswordEmailPayload) => {
+    const { to, name, resetLink } = payload;
+    try {
+        const info = await transporter.sendMail({
+            from: config.email.from,
+            to,
+            subject: 'Your Password Reset Request',
+            text: `Hi ${name},\n\nPlease click the following link to reset your password: ${resetLink}\n\nThis link will expire in 15 minutes.`,
+            html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Password Reset Request</h2>
+          <p>Hi ${name || 'there'},</p>
+          <p>We received a request to reset your password. Click the button below to set a new password:</p>
+          <a href="${resetLink}" style="background-color: #4A90E2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
+          <p style="margin-top: 20px;">This link will expire in 15 minutes.</p>
+        </div>
+      `,
+        });
+        logger.info({ messageId: info.messageId, recipient: to }, 'Password reset email sent');
+    } catch (error) {
+        logger.error({ error, recipient: to }, 'Failed to send password reset email');
+    }
+};

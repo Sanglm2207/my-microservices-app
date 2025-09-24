@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import * as authService from '../services/auth.service';
 import config from '../config';
 
@@ -83,4 +83,24 @@ export const logout = async (req: Request, res: Response) => {
     res.clearCookie('refresh_token', { path: '/api/v1/auth/refresh' });
 
     res.status(200).json({ message: 'Logged out successfully' });
+};
+
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await authService.requestPasswordReset(req.body.email);
+        res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token, newPassword } = req.body;
+        await authService.resetPassword(token, newPassword);
+        res.status(200).json({ message: 'Password has been reset successfully.' });
+    } catch (error) {
+        // Chuyển lỗi (ví dụ token không hợp lệ) đến errorHandler
+        next(error);
+    }
 };

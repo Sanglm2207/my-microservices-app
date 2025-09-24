@@ -94,6 +94,23 @@ export const publishUserRegisteredEvent = async (payload: UserRegisteredPayload)
     }
 };
 
-// Bạn có thể thêm các hàm publish cho các sự kiện khác ở đây
-// Ví dụ:
-// export const publishOrderCreatedEvent = async (payload: OrderPayload) => { ... };
+
+export interface PasswordResetPayload {
+    email: string;
+    name: string | null;
+    resetToken: string;
+}
+
+export const publishPasswordResetRequestedEvent = async (payload: PasswordResetPayload): Promise<void> => {
+    try {
+        const ch = await getChannel();
+        await ch.assertQueue(USER_EVENTS_QUEUE, { durable: true });
+
+        const message = { type: 'PASSWORD_RESET_REQUESTED', payload };
+
+        ch.sendToQueue(USER_EVENTS_QUEUE, Buffer.from(JSON.stringify(message)), { persistent: true });
+        console.log(`[message-producer] Sent '${message.type}' event to queue '${USER_EVENTS_QUEUE}'`);
+    } catch (error) {
+        console.error(`[message-producer] Error publishing PASSWORD_RESET_REQUESTED event for ${payload.email}:`, error);
+    }
+};

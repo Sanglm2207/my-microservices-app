@@ -1,7 +1,7 @@
 import amqp from 'amqplib';
 import config from '../config';
 import logger from 'logger';
-import { sendWelcomeEmail } from '../services/email.service';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/email.service';
 import { broadcast } from '../services/websocket.service';
 
 const USER_EVENTS_QUEUE = 'user_events';
@@ -44,10 +44,17 @@ export const startUserConsumer = async (): Promise<void> => {
                             });
                             break;
 
-                        // Thêm các case khác ở đây trong tương lai
-                        // case 'PASSWORD_RESET_REQUESTED':
-                        //   // ...
-                        //   break;
+                        case 'PASSWORD_RESET_REQUESTED':
+                            // Frontend URL cần được cung cấp qua biến môi trường
+                            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+                            const resetLink = `${frontendUrl}/reset-password?token=${message.payload.resetToken}`;
+
+                            sendPasswordResetEmail({
+                                to: message.payload.email,
+                                name: message.payload.name,
+                                resetLink: resetLink,
+                            });
+                            break;
 
                         default:
                             logger.warn({ type: message.type }, 'Received unhandled message type');

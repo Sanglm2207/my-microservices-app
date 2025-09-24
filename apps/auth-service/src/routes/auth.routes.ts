@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as authController from '../controllers/auth.controller';
 import { validate } from 'middlewares';
-import { registerSchema, loginSchema } from 'validation';
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from 'validation';
 
 const router: Router = Router();
 
@@ -76,5 +76,8 @@ router.post('/refresh', authController.refreshToken);
  *         description: User is not authenticated.
  */
 router.post('/logout', authController.logout);
+
+router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
+router.post('/reset-password', validate(resetPasswordSchema), authController.resetPassword);
 
 export default router;
