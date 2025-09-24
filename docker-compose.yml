@@ -49,6 +49,18 @@ services:
       - mongodb_user
     restart: always
 
+  file-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: file-service
+    command: node apps/file-service/dist/index.js
+    ports:
+      - '4003:4003'
+    env_file:
+      - ./apps/file-service/.env
+    restart: always
+
   # --- DATABASES ---
   mysql_auth:
     image: mysql:8.0

@@ -9,6 +9,7 @@ const config = {
     services: {
         auth: process.env.AUTH_SERVICE_URL as string,
         user: process.env.USER_SERVICE_URL as string,
+        file: process.env.FILE_SERVICE_URL as string,
     },
     jwt: {
         accessTokenSecret: process.env.ACCESS_TOKEN_SECRET as string,

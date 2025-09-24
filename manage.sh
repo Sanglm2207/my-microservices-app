@@ -6,7 +6,7 @@ set -e
 
 # --- CÁC BIẾN ---
 # Liệt kê tên các app có thể chạy độc lập
-APPS=("api-gateway" "auth-service" "user-service")
+APPS=("api-gateway" "auth-service" "user-service" "file-service")
 
 # --- HÀM HIỂN THỊ HƯỚNG DẪN SỬ DỤNG ---
 show_usage() {

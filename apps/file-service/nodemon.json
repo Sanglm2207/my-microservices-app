@@ -1,0 +1,9 @@
+{
+  "watch": [
+    "src",
+    "../../packages/middlewares/dist",
+    "../../packages/logger/dist"
+  ],
+  "exec": "ts-node-dev --respawn --transpile-only src/index.ts",
+  "ext": "ts,json"
+}

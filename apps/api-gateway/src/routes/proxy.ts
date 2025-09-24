@@ -16,6 +16,10 @@ const services = [
         route: '/users',
         target: config.services.user,
     },
+    {
+        route: '/files',
+        target: config.services.file,
+    },
 ];
 
 // Các route công khai (không cần xác thực)
@@ -53,5 +57,26 @@ router.use(
         },
     })
 );
+
+// Proxy to File Service (protected)
+router.use(
+    services[2].route, // /files
+    authMiddleware,
+    checkRole(['ADMIN']),
+    createProxyMiddleware({
+        target: services[2].target,
+        changeOrigin: true,
+        pathRewrite: (path, req) => {
+            return path.replace('/api/v1/files', '/api/v1');
+        },
+        onProxyReq: (proxyReq, req, res) => {
+            // Gửi thông tin user đã được xác thực tới service con
+            if (req.user && req.user.userId) {
+                proxyReq.setHeader('x-user-id', req.user.userId);
+            }
+        },
+    })
+);
+
 
 export default router;
