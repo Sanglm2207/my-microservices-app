@@ -95,7 +95,23 @@ services:
     volumes:
       - redis_cache_data:/data
 
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    container_name: rabbitmq
+    hostname: rabbitmq # Đặt hostname để các service khác có thể gọi
+    ports:
+      - '5672:5672' # Port giao tiếp AMQP cho các service
+      - '15672:15672' # Port cho giao diện quản lý web
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    environment:
+      # User/pass mặc định để các service kết nối
+      RABBITMQ_DEFAULT_USER: sanglm
+      RABBITMQ_DEFAULT_PASS: 12345678
+    restart: always
+
 volumes:
   mysql_auth_data:
   redis_cache_data:
   mongodb_user_data:
+  rabbitmq_data:

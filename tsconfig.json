@@ -6,8 +6,15 @@
     { "path": "packages/common-types" },
     { "path": "packages/database" },
     { "path": "packages/document-store" },
+    { "path": "packages/logger" },
+    { "path": "packages/message-producer" },
+    { "path": "packages/middlewares" },
+    { "path": "packages/swagger-docs" },
+    { "path": "packages/validation" },
     { "path": "apps/api-gateway" },
     { "path": "apps/auth-service" },
+    { "path": "apps/file-service" },
+    { "path": "apps/notification-service" },
     { "path": "apps/user-service" }
   ]
 }

@@ -6,7 +6,8 @@
     "../../packages/cache/dist",
     "../../packages/validation/dist",
     "../../packages/middlewares/dist",
-    "../../packages/logger/dist"
+    "../../packages/logger/dist",
+    "../../packages/message-producer/dist"
   ],
   "exec": "ts-node-dev --respawn --transpile-only src/index.ts",
   "ext": "ts,json"

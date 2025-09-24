@@ -4,6 +4,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../config';
 import { LoginRequestBody, RegisterRequestBody } from 'common-types';
+import { publishUserRegisteredEvent } from 'message-producer';
+
 
 /**
  * Đăng ký người dùng mới
@@ -16,6 +18,12 @@ export const registerUser = async (
 
     const newUser = await prisma.user.create({
         data: { email, password: hashedPassword, name },
+    });
+
+    await publishUserRegisteredEvent({
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

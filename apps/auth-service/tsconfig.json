@@ -10,7 +10,7 @@
     { "path": "../../packages/cache" },
     { "path": "../../packages/validation" },
     { "path": "../../packages/middlewares" },
-    { "path": "../../packages/logger"},
-    { "path": "../../packages/swagger-docs" }
+    { "path": "../../packages/logger" },
+    { "path": "../../packages/message-producer" }
   ]
 }

@@ -16,6 +16,7 @@ const config = {
         refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d',
     },
     corsOrigin: process.env.CORS_ORIGIN || '*',
+    rabbitmqUrl: process.env.RABBITMQ_URL as string,
 };
 
 // Validate essential config
