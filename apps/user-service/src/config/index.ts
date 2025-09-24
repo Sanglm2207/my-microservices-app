@@ -9,7 +9,7 @@ const config = {
     port: process.env.PORT || 4002,
     nodeEnv: process.env.NODE_ENV || 'development',
     mongoUri: process.env.MONGO_URI as string,
-
+    redisUrl: process.env.REDIS_URL as string,
     // Lấy địa chỉ của client được phép truy cập (API Gateway)
     corsOrigin: process.env.CORS_ORIGIN || '*',
 
@@ -22,5 +22,13 @@ if (!config.mongoUri) {
     console.error('FATAL ERROR: MONGO_URI is not defined in the environment variables for user-service.');
     process.exit(1); // Thoát tiến trình với mã lỗi
 }
+
+if (!config.redisUrl) {
+    console.error('FATAL ERROR: REDIS_URL is not defined in the environment variables for user-service.');
+    process.exit(1); // Thoát tiến trình với mã lỗi
+}
+
+process.env.REDIS_URL = config.redisUrl;
+
 
 export default config;

@@ -1,6 +1,9 @@
 import { UserProfileModel } from '../models/user.model';
 import axios from 'axios';
 import config from '../config';
+import logger from 'logger';
+import { redisClient } from 'cache';
+
 
 interface UserProfileUpdatePayload {
     name?: string;
@@ -8,30 +11,49 @@ interface UserProfileUpdatePayload {
     bio?: string;
 }
 
+// Định nghĩa key cho cache và thời gian hết hạn (TTL)
+const USER_PROFILE_CACHE_KEY = (userId: string) => `user-profile:${userId}`;
+const CACHE_TTL_SECONDS = 5 * 60; // 5 phút
+
 /**
  * Lấy hoặc tạo mới hồ sơ người dùng.
  * @param userId - ID người dùng từ header (do API Gateway cung cấp).
  * @returns Hồ sơ người dùng.
  */
-export const findOrCreateUserProfile = async (userId: string) => {
+export const findOrCreateUserProfile = async (userId: string, userEmail: string) => {
+    const cacheKey = USER_PROFILE_CACHE_KEY(userId);
+
+    // Tìm trong Redis trước
+    try {
+        const cachedProfile = await redisClient.get(cacheKey);
+        if (cachedProfile) {
+            logger.info({ userId }, 'Cache HIT for user profile');
+            return JSON.parse(cachedProfile); // Dữ liệu trong Redis là string, cần parse lại
+        }
+    } catch (error) {
+        logger.error({ error, userId }, 'Error reading from Redis cache');
+    }
+
+    // Nếu không có trong cache (Cache Miss), đọc từ MongoDB
+    logger.info({ userId }, 'Cache MISS for user profile, fetching from DB');
     let userProfile = await UserProfileModel.findById(userId).exec();
 
     if (!userProfile) {
-        try {
-            // Gọi đến auth-service để lấy thông tin cơ bản
-            const response = await axios.get(`${config.authServiceInternalUrl}/users/${userId}`);
-            const { email, name } = response.data;
+        // Nếu chưa có profile, tạo một profile mới
+        userProfile = await UserProfileModel.create({
+            _id: userId,
+            email: userEmail,
+            name: `User_${userId.substring(0, 6)}`,
+        });
+    }
 
-            userProfile = await UserProfileModel.create({
-                _id: userId,
-                email: email,
-                name: name || `User_${userId.substring(0, 6)}`,
-            });
-        } catch (error) {
-            console.error("Failed to fetch user data from auth-service", error);
-            // Nếu auth-service bị lỗi, vẫn tạo profile cơ bản
-            userProfile = await UserProfileModel.create({ _id: userId, email: 'unknown@service.error' });
-        }
+    // Lưu kết quả từ DB vào Redis với TTL
+    try {
+        // .lean() để lấy object thuần túy, không phải Mongoose document
+        const profileToCache = userProfile.toObject ? userProfile.toObject() : userProfile;
+        await redisClient.set(cacheKey, JSON.stringify(profileToCache), 'EX', CACHE_TTL_SECONDS);
+    } catch (error) {
+        logger.error({ error, userId }, 'Error setting Redis cache');
     }
 
     return userProfile;
@@ -47,11 +69,24 @@ export const updateUserProfile = async (
     userId: string,
     payload: UserProfileUpdatePayload
 ) => {
+    // Cập nhật trong MongoDB trước
     const updatedProfile = await UserProfileModel.findByIdAndUpdate(
         userId,
         { $set: payload },
-        { new: true, runValidators: true } // new: true để trả về document sau khi update
+        { new: true }
     ).exec();
+
+    // Nếu cập nhật thành công, xóa (invalidate) cache
+    if (updatedProfile) {
+        const cacheKey = USER_PROFILE_CACHE_KEY(userId);
+        try {
+            logger.info({ userId }, 'Invalidating user profile cache');
+            await redisClient.del(cacheKey);
+        } catch (error) {
+            logger.error({ error, userId }, 'Error invalidating Redis cache');
+            // Lỗi xóa cache không nên làm hỏng request chính, chỉ cần log lại
+        }
+    }
 
     return updatedProfile;
 };

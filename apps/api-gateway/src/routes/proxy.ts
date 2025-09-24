@@ -20,6 +20,7 @@ const userProxy = createProxyMiddleware({
     onProxyReq: (proxyReq, req, res) => {
         if (req.user && req.user.userId) {
             proxyReq.setHeader('x-user-id', req.user.userId);
+            proxyReq.setHeader('x-user-email', req.user.email);
         }
     },
 });
@@ -33,6 +34,7 @@ const fileProxy = createProxyMiddleware({
     onProxyReq: (proxyReq, req, res) => {
         if (req.user && req.user.userId) {
             proxyReq.setHeader('x-user-id', req.user.userId);
+            proxyReq.setHeader('x-user-email', req.user.email);
         }
     },
 });

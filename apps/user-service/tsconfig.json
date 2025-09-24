@@ -8,6 +8,9 @@
     { "path": "../../packages/common-types" },
     { "path": "../../packages/document-store" },
     { "path": "../../packages/validation" },
-    { "path": "../../packages/middlewares" }
+    { "path": "../../packages/middlewares" },
+    { "path": "../../packages/cache" },
+    { "path": "../../packages/logger" },
+
   ]
 }

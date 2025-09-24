@@ -269,6 +269,9 @@ importers:
       axios:
         specifier: ^1.12.2
         version: 1.12.2
+      cache:
+        specifier: workspace:^
+        version: link:../../packages/cache
       common-types:
         specifier: workspace:*
         version: link:../../packages/common-types
@@ -284,6 +287,9 @@ importers:
       express:
         specifier: ^4.18.2
         version: 4.18.2
+      logger:
+        specifier: workspace:^
+        version: link:../../packages/logger
       middlewares:
         specifier: workspace:^
         version: link:../../packages/middlewares

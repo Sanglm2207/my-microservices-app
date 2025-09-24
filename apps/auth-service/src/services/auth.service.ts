@@ -51,7 +51,7 @@ export const validateUser = async (
  * Tạo Access Token và Refresh Token
  */
 export const generateTokens = (user: User) => {
-    const accessTokenPayload = { userId: user.id, role: user.role };
+    const accessTokenPayload = { userId: user.id, role: user.role, email: user.email };
     const refreshTokenPayload = { userId: user.id, version: user.tokenVersion };
 
     const accessToken = jwt.sign(accessTokenPayload, config.jwt.accessTokenSecret, {

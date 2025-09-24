@@ -18,6 +18,7 @@ export interface User {
 export interface JWTPayload {
     userId: string;
     role: 'USER' | 'ADMIN';
+    email: string;
 }
 
 /**

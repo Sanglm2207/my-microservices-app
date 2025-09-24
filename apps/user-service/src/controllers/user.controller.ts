@@ -11,12 +11,19 @@ const getUserIdFromHeader = (req: Request): string | null => {
 
 export const getMyProfile = async (req: Request, res: Response) => {
     const userId = getUserIdFromHeader(req);
+    const userEmail = req.headers['x-user-email'] as string | null;
+
     if (!userId) {
         return res.status(401).json({ message: 'User ID not found in request headers.' });
     }
 
+    if (!userEmail) {
+        // Lỗi này cũng nên là 401 vì thiếu thông tin cần thiết
+        return res.status(401).json({ message: 'Unauthorized: User email is missing from the request.' });
+    }
+
     try {
-        const userProfile = await userService.findOrCreateUserProfile(userId);
+        const userProfile = await userService.findOrCreateUserProfile(userId, userEmail);
         res.status(200).json(userProfile);
     } catch (error) {
         console.error(error);
