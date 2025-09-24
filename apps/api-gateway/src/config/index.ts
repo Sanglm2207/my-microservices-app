@@ -14,6 +14,7 @@ const config = {
     jwt: {
         accessTokenSecret: process.env.ACCESS_TOKEN_SECRET as string,
     },
+    redisUrl: process.env.REDIS_URL as string,
     corsOrigin: process.env.CORS_ORIGIN || '*',
 };
 
@@ -21,8 +22,11 @@ if (!config.services.auth || !config.services.user || !config.jwt.accessTokenSec
     throw new Error('FATAL ERROR: Missing essential environment variables for API Gateway.');
 }
 
+if (!config.redisUrl) {
+    throw new Error('FATAL ERROR: REDIS_URL is not defined for API Gateway.');
+}
+
 // Cập nhật lại ACCESS_TOKEN_SECRET trong process.env để package 'auth-client' có thể đọc được
-// Đây là một cách để truyền biến env cho package con
 process.env.ACCESS_TOKEN_SECRET = config.jwt.accessTokenSecret;
 
 export default config;

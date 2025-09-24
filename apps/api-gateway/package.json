@@ -13,7 +13,12 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "http-proxy-middleware": "^2.0.6"
+    "express-rate-limit": "^8.1.0",
+    "http-proxy-middleware": "^2.0.6",
+    "rate-limit-redis": "^4.2.2",
+    "redis": "^5.8.2",
+    "logger": "workspace:*"
+
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.6",

@@ -7,6 +7,8 @@
   "references": [
     { "path": "../../packages/common-types" },
     { "path": "../../packages/auth-client" },
-    { "path": "../../packages/middlewares" }
+    { "path": "../../packages/middlewares" },
+    { "path": "../../packages/logger" },
+
   ]
 }

@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import config from './config';
 import proxyRoutes from './routes/proxy';
+import { generalRateLimiter } from './middlewares/rateLimiter';
 
 const app = express();
 
@@ -10,6 +11,11 @@ const app = express();
 app.use(cors({ origin: config.corsOrigin, credentials: true }));
 app.use(cookieParser());
 // Không cần app.use(express.json()) vì Gateway chỉ proxy, không đọc body
+
+// --- Rate Limiting ---
+// Áp dụng rate limit chung cho tất cả các request đến /api/v1
+app.use('/api/v1', generalRateLimiter);
+
 
 // Health check endpoint
 app.get('/health', (req, res) => {
