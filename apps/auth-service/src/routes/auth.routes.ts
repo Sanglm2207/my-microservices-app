@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as authController from '../controllers/auth.controller';
 import { validate } from 'middlewares';
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from 'validation';
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from 'validation';
 
 const router: Router = Router();
 
@@ -79,5 +79,14 @@ router.post('/logout', authController.logout);
 
 router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
 router.post('/reset-password', validate(resetPasswordSchema), authController.resetPassword);
+
+// Xác thực email người dùng, click vào link trong email
+router.get('/verify-email', authController.verifyEmail);
+
+router.post(
+    '/change-password',
+    validate(changePasswordSchema),
+    authController.changePassword
+);
 
 export default router;

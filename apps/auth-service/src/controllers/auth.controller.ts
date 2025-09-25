@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import * as authService from '../services/auth.service';
 import config from '../config';
+import logger from 'logger';
 
 const setTokenCookies = (res: Response, accessToken: string, refreshToken: string) => {
     res.cookie('access_token', accessToken, {
@@ -33,17 +34,26 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
     try {
-        const user = await authService.validateUser(req.body);
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+        const validationResult = await authService.validateUser(req.body);
+        // Kiểm tra xem service có trả về lỗi không
+        if ('error' in validationResult) {
+            // Nếu là lỗi chưa xác thực, trả về 403 Forbidden
+            if (validationResult.error.includes('not verified')) {
+                return res.status(403).json({ message: validationResult.error });
+            }
+            // Các lỗi khác (sai pass) trả về 401 Unauthorized
+            return res.status(401).json({ message: validationResult.error });
         }
+
+        // Nếu không có lỗi, validationResult chính là user
+        const user = validationResult;
 
         const { accessToken, refreshToken } = authService.generateTokens(user);
         setTokenCookies(res, accessToken, refreshToken);
 
         res.status(200).json({ message: 'Logged in successfully' });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -101,6 +111,36 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
         res.status(200).json({ message: 'Password has been reset successfully.' });
     } catch (error) {
         // Chuyển lỗi (ví dụ token không hợp lệ) đến errorHandler
+        next(error);
+    }
+};
+
+export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.headers['x-user-id'] as string;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        await authService.changePassword(userId, req.body);
+        res.status(200).json({ message: 'Password changed successfully.' });
+    } catch (error: any) {
+        // Trả về lỗi 400 cho các lỗi nghiệp vụ cụ thể
+        if (error.message.includes('Incorrect current password') || error.message.includes('Please verify your email')) {
+            return res.status(400).json({ message: error.message });
+        }
+        next(error);
+    }
+};
+
+export const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token } = req.query as { token: string };
+        const success = await authService.verifyUserEmail(token);
+        if (!success) {
+            return res.status(400).send('<h1>Invalid or expired verification link.</h1>');
+        }
+        res.status(200).send('<h1>Email verified successfully! You can now close this tab.</h1>');
+    } catch (error) {
         next(error);
     }
 };

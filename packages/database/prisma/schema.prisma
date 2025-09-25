@@ -20,6 +20,7 @@ model User {
   name      String?
   role      Role     @default(USER)
   tokenVersion Int   @default(0)
+  isVerified   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../config';
 import { LoginRequestBody, RegisterRequestBody } from 'common-types';
-import { publishPasswordResetRequestedEvent, publishUserRegisteredEvent } from 'message-producer';
+import { publishAccountCreatedEvent, publishPasswordResetRequestedEvent, publishVerificationEmailRequestedEvent } from 'message-producer';
 import { randomBytes } from 'crypto';
 
 /**
@@ -15,35 +15,49 @@ export const registerUser = async (
 ): Promise<Omit<User, 'password'>> => {
     const { email, password, name } = userData;
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = await prisma.user.create({
         data: { email, password: hashedPassword, name },
     });
 
-    await publishUserRegisteredEvent({
+    const verificationToken = randomBytes(32).toString('hex');
+    await redisClient.set(`verify:${verificationToken}`, newUser.id, 'EX', 86400); // 24 giờ
+
+    // Bắn 2 sự kiện riêng biệt
+    await publishAccountCreatedEvent({
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
+    });
+    await publishVerificationEmailRequestedEvent({
+        email: newUser.email,
+        name: newUser.name,
+        verificationToken,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
 };
-
 /**
  * Xác thực thông tin đăng nhập của người dùng
  */
 export const validateUser = async (
     credentials: LoginRequestBody
-): Promise<User | null> => {
+): Promise<User | { error: string }> => {
     const user = await prisma.user.findUnique({
         where: { email: credentials.email },
     });
 
+    // User không tồn tại hoặc sai mật khẩu
     if (!user || !(await bcrypt.compare(credentials.password, user.password))) {
-        return null;
+        return { error: 'Invalid email or password' };
     }
+
+    // User tồn tại, đúng mật khẩu, nhưng chưa xác thực email
+    if (!user.isVerified) {
+        return { error: 'Please verify your email before logging in.' };
+    }
+
     return user;
 };
 
@@ -156,4 +170,44 @@ export const resetPassword = async (token: string, newPass: string) => {
     await redisClient.del(`reset:${token}`);
 
     return updatedUser;
+};
+
+interface ChangePasswordPayload {
+    currentPassword: string;
+    newPassword: string;
+}
+
+/**
+ * Thay đổi mật khẩu khi đang đăng nhập
+ */
+export const changePassword = async (userId: string, passData: ChangePasswordPayload) => {
+    const { currentPassword, newPassword } = passData;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+        throw new Error('User not found.');
+    }
+    if (!user.isVerified) {
+        throw new Error('Please verify your email before changing the password.');
+    }
+    const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordMatch) {
+        throw new Error('Incorrect current password.');
+    }
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+        where: { id: userId },
+        data: {
+            password: newHashedPassword,
+            tokenVersion: { increment: 1 },
+        },
+    });
+};
+
+
+export const verifyUserEmail = async (token: string): Promise<boolean> => {
+    const userId = await redisClient.get(`verify:${token}`);
+    if (!userId) return false;
+    await prisma.user.update({ where: { id: userId }, data: { isVerified: true } });
+    await redisClient.del(`verify:${token}`);
+    return true;
 };

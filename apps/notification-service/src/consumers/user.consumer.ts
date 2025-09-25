@@ -1,7 +1,7 @@
 import amqp from 'amqplib';
 import config from '../config';
 import logger from 'logger';
-import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/email.service';
+import { sendWelcomeEmail, sendPasswordResetEmail, sendVerificationEmail } from '../services/email.service';
 import { broadcast } from '../services/websocket.service';
 
 const USER_EVENTS_QUEUE = 'user_events';
@@ -23,10 +23,12 @@ export const startUserConsumer = async (): Promise<void> => {
                 try {
                     const message = JSON.parse(msg.content.toString());
                     logger.info({ message }, `[x] Received message from ${USER_EVENTS_QUEUE}`);
+                    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 
                     // Xử lý sự kiện dựa trên 'type'
                     switch (message.type) {
-                        case 'USER_REGISTERED':
+                        case 'ACCOUNT_CREATED':
                             // 1. Gửi email chào mừng
                             sendWelcomeEmail({
                                 to: message.payload.email,
@@ -46,13 +48,21 @@ export const startUserConsumer = async (): Promise<void> => {
 
                         case 'PASSWORD_RESET_REQUESTED':
                             // Frontend URL cần được cung cấp qua biến môi trường
-                            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
                             const resetLink = `${frontendUrl}/reset-password?token=${message.payload.resetToken}`;
 
                             sendPasswordResetEmail({
                                 to: message.payload.email,
                                 name: message.payload.name,
                                 resetLink: resetLink,
+                            });
+                            break;
+
+                        case 'VERIFICATION_EMAIL_REQUESTED':
+                            const verificationLink = `${frontendUrl}/verify-email?token=${message.payload.verificationToken}`;
+                            sendVerificationEmail({
+                                to: message.payload.email,
+                                name: message.payload.name,
+                                verificationLink: verificationLink,
                             });
                             break;
 

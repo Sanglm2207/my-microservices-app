@@ -49,7 +49,11 @@ router.use(
 );
 
 // Các route AUTH còn lại (yêu cầu đăng nhập, ví dụ: /logout)
-router.use('/auth/logout', authMiddleware, authProxy);
+router.use(
+    ['/auth/logout', '/auth/change-password'],
+    authMiddleware,
+    authProxy
+);
 router.use('/auth/refresh', authProxy); // refresh token không cần authMiddleware
 
 // Các route USER (yêu cầu đăng nhập)

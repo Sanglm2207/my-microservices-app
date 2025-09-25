@@ -42,62 +42,7 @@ Một bộ khung backend hoàn chỉnh được xây dựng theo kiến trúc mi
 
 ## 🏛️ Sơ đồ Kiến trúc
 
-graph TD
-subgraph "External World"
-Client[<img src='https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/user.svg' width='30' height='30' /><br/>Client/Browser]
-Admin[<img src='https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/user-shield.svg' width='30' height='30' /><br/>Admin UI]
-end
-
-    subgraph "Infrastructure & Databases"
-        MySQL[<img src='https://raw.githubusercontent.com/devicons/devicon/master/icons/mysql/mysql-original-wordmark.svg' width='40' height='40'/><br/>MySQL<br/>(Prisma)]
-        MongoDB[<img src='https://raw.githubusercontent.com/devicons/devicon/master/icons/mongodb/mongodb-original-wordmark.svg' width='40' height='40'/><br/>MongoDB<br/>(Mongoose)]
-        Redis[<img src='https://raw.githubusercontent.com/devicons/devicon/master/icons/redis/redis-original-wordmark.svg' width='40' height='40'/><br/>Redis]
-        S3[<img src='https://raw.githubusercontent.com/devicons/devicon/master/icons/amazonwebservices/amazonwebservices-original-wordmark.svg' width='40' height='40'/><br/>Amazon S3]
-        RabbitMQ[<img src='https://raw.githubusercontent.com/devicons/devicon/master/icons/rabbitmq/rabbitmq-original-wordmark.svg' width='40' height='40'/><br/>RabbitMQ]
-    end
-
-    subgraph "Backend Services (Monorepo)"
-
-        APIGateway["<img src='https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/dungeon.svg' width='30' height='30'/><br/><b>API Gateway</b><br/>Port: 4000<br/>- Proxy & Routing<br/>- Authentication (JWT)<br/>- Authorization (RBAC)<br/>- Rate Limiting"]
-
-        subgraph "Services"
-            AuthService["<img src='https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/key.svg' width='25' height='25'/><br/><b>Auth Service</b><br/>Port: 4001<br/>- Register, Login, Logout<br/>- Forgot/Reset Password<br/>- JWT Management<br/>- Publishes Events"]
-            UserService["<img src='https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/id-card.svg' width='25' height='25'/><br/><b>User Service</b><br/>Port: 4002<br/>- User Profile CRUD<br/>- Data Caching"]
-            FileService["<img src='https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/file-arrow-up.svg' width='25' height='25'/><br/><b>File Service</b><br/>Port: 4003<br/>- Image Upload<br/>- Image Processing (Sharp)"]
-            NotificationService["<img src='https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/paper-plane.svg' width='25' height='25'/><br/><b>Notification Service</b><br/>Port: 4004<br/>- Consumes Events<br/>- Email (Nodemailer)<br/>- WebSocket Server"]
-        end
-
-    end
-
-    %% --- Defining Connections ---
-
-    %% Client to Gateway (HTTP/S)
-    Client -- "HTTP/S Requests<br/>(Login, Get Profile, Upload)" --> APIGateway
-
-    %% Gateway to Services (Proxy)
-    APIGateway -- "Proxy Auth Routes" --> AuthService
-    APIGateway -- "Proxy User Routes" --> UserService
-    APIGateway -- "Proxy File Routes" --> FileService
-
-    %% Service to Database
-    AuthService -- "Reads/Writes Users" --> MySQL
-    AuthService -- "Blacklists Tokens<br/>Stores Reset Tokens" --> Redis
-    UserService -- "Reads/Writes Profiles" --> MongoDB
-    UserService -- "Caches Profiles" --> Redis
-    FileService -- "Stores Files" --> S3
-
-    %% Inter-Service Communication
-    UserService -.->|Internal HTTP Call| AuthService
-    AuthService -- "Publishes<br/>'USER_REGISTERED'<br/>'PASSWORD_RESET_REQUESTED'" --> RabbitMQ
-    RabbitMQ -- "Delivers Events" --> NotificationService
-
-    %% Real-time Communication
-    Admin -- "WebSocket Connection (ws://)" --> NotificationService
-
-    %% Styling
-    style Client fill:#f9f,stroke:#333,stroke-width:2px
-    style Admin fill:#f9f,stroke:#333,stroke-width:2px
-    style APIGateway fill:#bbf,stroke:#333,stroke-width:4px
+ <!-- Gợi ý: bạn có thể vẽ sơ đồ bằng draw.io hoặc excalidraw và upload lên imgur -->
 
 ## 🚀 Bắt đầu
 

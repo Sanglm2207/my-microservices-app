@@ -5,6 +5,7 @@ import logger from 'logger';
 const transporter = nodemailer.createTransport({
     host: config.email.host,
     port: config.email.port,
+    secure: config.email.port === 465, // true cho port 465, false cho các port khác như 587
     auth: {
         user: config.email.user,
         pass: config.email.pass,
@@ -66,4 +67,27 @@ export const sendPasswordResetEmail = async (payload: ResetPasswordEmailPayload)
     } catch (error) {
         logger.error({ error, recipient: to }, 'Failed to send password reset email');
     }
+};
+
+export interface VerificationEmailPayload {
+    to: string;
+    name: string | null;
+    verificationLink: string;
+}
+export const sendVerificationEmail = async (payload: VerificationEmailPayload) => {
+    const { to, name, verificationLink } = payload;
+    await transporter.sendMail({
+        from: config.email.from,
+        to,
+        subject: 'Please Verify Your Email Address',
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Welcome, ${name || 'there'}!</h2>
+                <p>One last step. Please click the button below to verify your email address:</p>
+                <a href="${verificationLink}" style="...">Verify Email</a>
+                <p>This link will expire in 24 hours.</p>
+            </div>
+        `,
+    });
+    logger.info({ recipient: to }, 'Verification email sent');
 };
