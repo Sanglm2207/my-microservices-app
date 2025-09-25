@@ -19,6 +19,7 @@
     "middlewares": "workspace:^",
     "tsconfig": "workspace:*",
     "validation": "workspace:^",
+    "message-producer": "workspace:*",
     "zod": "^3.22.4"
   },
   "devDependencies": {

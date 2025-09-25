@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import * as userService from '../services/user.service';
 
 /**
@@ -46,5 +46,54 @@ export const updateMyProfile = async (req: Request, res: Response) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { page, limit, search } = req.query as { page: string, limit: string, search?: string };
+        const result = await userService.findAllUsers({
+            page: parseInt(page, 10),
+            limit: parseInt(limit, 10),
+            search,
+        });
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await userService.findUserById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.status(200).json(user);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateUserById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const updatedUser = await userService.updateUserById(req.params.id, req.body);
+        if (!updatedUser) return res.status(404).json({ message: 'User not found' });
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const deletedProfile = await userService.deleteUserProfile(req.params.id);
+
+        if (!deletedProfile) {
+            return res.status(404).json({ message: 'User profile not found.' });
+        }
+
+        // 204 No Content là response chuẩn cho request DELETE thành công mà không cần trả về body
+        res.status(204).send();
+    } catch (error) {
+        next(error);
     }
 };

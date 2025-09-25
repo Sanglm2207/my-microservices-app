@@ -83,3 +83,21 @@ export const publishPasswordResetRequestedEvent = async (payload: PasswordResetP
         console.error(`[message-producer] Error publishing PASSWORD_RESET_REQUESTED event for ${payload.email}:`, error);
     }
 };
+
+export interface UserProfileDeletedPayload {
+    userId: string;
+}
+
+export const publishUserProfileDeletedEvent = async (payload: UserProfileDeletedPayload): Promise<void> => {
+    try {
+        const ch = await getChannel();
+        await ch.assertQueue(USER_EVENTS_QUEUE, { durable: true });
+
+        const message = { type: 'USER_PROFILE_DELETED', payload };
+
+        ch.sendToQueue(USER_EVENTS_QUEUE, Buffer.from(JSON.stringify(message)), { persistent: true });
+        console.log(`[message-producer] Sent '${message.type}' event for userId: ${payload.userId}`);
+    } catch (error) {
+        console.error(`[message-producer] Error publishing USER_PROFILE_DELETED event for userId ${payload.userId}:`, error);
+    }
+};

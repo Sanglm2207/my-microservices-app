@@ -14,3 +14,12 @@ export const updateUserProfileSchema = z.object({
             .optional(),
     }),
 });
+
+
+export const getUsersSchema = z.object({
+    query: z.object({
+        page: z.string().regex(/^\d+$/).optional().default('1'),
+        limit: z.string().regex(/^\d+$/).optional().default('10'),
+        search: z.string().optional(),
+    }),
+});

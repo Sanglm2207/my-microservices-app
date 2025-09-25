@@ -77,6 +77,9 @@ importers:
 
   apps/auth-service:
     dependencies:
+      amqplib:
+        specifier: ^0.10.3
+        version: 0.10.3
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
@@ -123,6 +126,9 @@ importers:
         specifier: ^3.22.4
         version: 3.22.4
     devDependencies:
+      '@types/amqplib':
+        specifier: ^0.10.4
+        version: 0.10.4
       '@types/bcrypt':
         specifier: ^5.0.2
         version: 5.0.2
@@ -290,6 +296,9 @@ importers:
       logger:
         specifier: workspace:^
         version: link:../../packages/logger
+      message-producer:
+        specifier: workspace:*
+        version: link:../../packages/message-producer
       middlewares:
         specifier: workspace:^
         version: link:../../packages/middlewares
@@ -1432,7 +1441,7 @@ packages:
     resolution: {integrity: sha512-Yhlar6v9WQgUp/He7BdgzOz8lqMQ8sU+jkCq7Wx8Myc5YFJLbEe7lgui/V7G1qB1DJykHSGwreceSaD60Y0PUQ==}
     hasBin: true
     dependencies:
-      detect-libc: 2.1.0
+      detect-libc: 2.1.1
       https-proxy-agent: 5.0.1
       make-dir: 3.1.0
       node-fetch: 2.7.0
@@ -2959,8 +2968,8 @@ packages:
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
     dev: false
 
-  /detect-libc@2.1.0:
-    resolution: {integrity: sha512-vEtk+OcP7VBRtQZ1EJ3bdgzSfBjgnEalLTp5zjJrS+2Z1w2KZly4SBdac/WDU3hhsNAZ9E8SC96ME4Ey8MZ7cg==}
+  /detect-libc@2.1.1:
+    resolution: {integrity: sha512-ecqj/sy1jcK1uWrwpR67UhYrIFQ+5WlGxth34WquCbamhFA6hkkwiu37o6J5xCHdo1oixJRfVRw+ywV+Hq/0Aw==}
     engines: {node: '>=8'}
     dev: false
 
@@ -5170,7 +5179,7 @@ packages:
     requiresBuild: true
     dependencies:
       color: 4.2.3
-      detect-libc: 2.1.0
+      detect-libc: 2.1.1
       semver: 7.7.2
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.33.1

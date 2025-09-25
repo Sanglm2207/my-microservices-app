@@ -4,6 +4,7 @@ import { authMiddleware } from '../middlewares/auth.middleware';
 import config from '../config';
 // import { checkRole } from '../middlewares/checkRole';
 import { sensitiveActionRateLimiter } from '../middlewares/rateLimiter';
+import { checkRole } from '../middlewares/checkRole';
 
 const router: Router = Router();
 
@@ -56,8 +57,16 @@ router.use(
 );
 router.use('/auth/refresh', authProxy); // refresh token không cần authMiddleware
 
-// Các route USER (yêu cầu đăng nhập)
-router.use('/users', authMiddleware, userProxy);
+// Route cho người dùng thường: /users/me
+router.use('/users/me', authMiddleware, userProxy);
+
+// Route cho ADMIN: /users, /users/:id, v.v.
+router.use(
+    '/users',
+    authMiddleware,
+    checkRole(['ADMIN']),
+    userProxy
+);
 
 
 // Các route FILE (yêu cầu đăng nhập)

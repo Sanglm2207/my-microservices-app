@@ -3,7 +3,7 @@ import axios from 'axios';
 import config from '../config';
 import logger from 'logger';
 import { redisClient } from 'cache';
-
+import { publishUserProfileDeletedEvent } from 'message-producer';
 
 interface UserProfileUpdatePayload {
     name?: string;
@@ -89,4 +89,52 @@ export const updateUserProfile = async (
     }
 
     return updatedProfile;
+};
+
+export const findAllUsers = async (options: { page: number; limit: number; search?: string }) => {
+    const { page, limit, search } = options;
+    const skip = (page - 1) * limit;
+
+    const whereCondition: any = {};
+    if (search) {
+        whereCondition.OR = [
+            { email: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: 'insensitive' } },
+        ];
+    }
+
+    const users = await UserProfileModel.find(whereCondition)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec();
+
+    const totalUsers = await UserProfileModel.countDocuments(whereCondition);
+
+    return {
+        data: users,
+        totalPages: Math.ceil(totalUsers / limit),
+        currentPage: page,
+        totalUsers,
+    };
+};
+
+export const findUserById = (userId: string) => {
+    return UserProfileModel.findById(userId).lean().exec();
+};
+
+export const updateUserById = (userId: string, payload: any) => {
+    return UserProfileModel.findByIdAndUpdate(userId, { $set: payload }, { new: true }).lean().exec();
+};
+
+export const deleteUserProfile = async (userId: string) => {
+    const deletedProfile = await UserProfileModel.findByIdAndDelete(userId).exec();
+
+    // Nếu tìm thấy và xóa thành công profile, bắn sự kiện để các service khác xử lý
+    if (deletedProfile) {
+        await publishUserProfileDeletedEvent({ userId });
+    }
+
+    return deletedProfile;
 };
