@@ -1,36 +1,34 @@
 import express from 'express';
+import http from 'http';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import config from './config';
 import proxyRoutes from './routes/proxy';
-import { generalRateLimiter } from './middlewares/rateLimiter';
+import { generalRateLimiter, getRateLimitRedisClient } from './middlewares/rateLimiter';
+import { setupGracefulShutdown, addCleanupAction } from 'utils';
+import logger from 'logger';
 
 const app = express();
+const server = http.createServer(app);
 
-// Middlewares cơ bản
+// Middlewares
 app.use(cors({ origin: config.corsOrigin, credentials: true }));
 app.use(cookieParser());
-// Không cần app.use(express.json()) vì Gateway chỉ proxy, không đọc body
-
-// --- Rate Limiting ---
-// Áp dụng rate limit chung cho tất cả các request đến /api/v1
 app.use('/api/v1', generalRateLimiter);
 
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).send('API Gateway is healthy and running!');
-});
-
-// Sử dụng proxy routes cho tất cả các request có prefix /api/v1
-// Ví dụ: /api/v1/auth/login sẽ được xử lý bởi proxyRoutes
+// Routes
+app.get('/health', (req, res) => res.status(200).send('API Gateway is healthy!'));
 app.use('/api/v1', proxyRoutes);
+app.use((req, res) => res.status(404).json({ message: 'Endpoint not found.' }));
 
-// Xử lý lỗi 404 cho các route không khớp
-app.use((req, res) => {
-    res.status(404).json({ message: 'Endpoint not found.' });
-});
+// Start Server
+server.listen(config.port, () => {
+    logger.info(`API Gateway is running on http://localhost:${config.port}`);
 
-app.listen(config.port, () => {
-    console.log(`API Gateway is running on http://localhost:${config.port}`);
+    // Setup Graceful Shutdown
+    const rateLimitRedisClient = getRateLimitRedisClient();
+    if (rateLimitRedisClient) {
+        addCleanupAction(() => rateLimitRedisClient.quit());
+    }
+    setupGracefulShutdown(server);
 });

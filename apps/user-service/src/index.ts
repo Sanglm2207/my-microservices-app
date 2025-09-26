@@ -1,29 +1,48 @@
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
-import { connectMongo } from 'document-store';
+import { connectMongo, mongoose } from 'document-store';
 import config from './config';
 import apiRoutes from './routes';
+import logger from 'logger';
 import { errorHandler } from 'middlewares';
+import { setupSwagger } from 'swagger-docs';
+import { setupGracefulShutdown, addCleanupAction } from 'utils';
+import { redisClient } from 'cache';
+
+const app = express();
+const server = http.createServer(app);
 
 const startServer = async () => {
-    // Kết nối đến MongoDB trước khi khởi động server
-    await connectMongo(config.mongoUri);
+    try {
+        await connectMongo(config.mongoUri);
 
-    const app = express();
+        app.use(cors({ origin: config.corsOrigin, credentials: true }));
+        app.use(express.json());
 
-    app.use(cors({ origin: config.corsOrigin, credentials: true }));
-    app.use(express.json());
+        setupSwagger(app, {
+            title: 'User Service API', version: '1.0.0',
+            description: 'API docs for User Service',
+            apiBaseUrl: `http://localhost:${config.port}`, apiDocsPath: '/api-docs'
+        });
 
-    // Gắn routes vào prefix /api/v1
-    app.use('/api/v1', apiRoutes);
+        app.use('/api/v1', apiRoutes);
+        app.get('/health', (req, res) => res.send('User service is healthy!'));
+        app.use(errorHandler);
 
-    app.get('/health', (req, res) => res.send('User service is healthy and running!'));
+        server.listen(config.port, () => {
+            logger.info(`User service running on http://localhost:${config.port}`);
 
-    app.use(errorHandler);
+            // Setup Graceful Shutdown
+            addCleanupAction(() => mongoose.connection.close());
+            addCleanupAction(() => redisClient.quit());
+            setupGracefulShutdown(server);
+        });
 
-    app.listen(config.port, () => {
-        console.log(`User service is running on http://localhost:${config.port}`);
-    });
+    } catch (error) {
+        logger.error({ error }, "Failed to start user service");
+        process.exit(1);
+    }
 };
 
 startServer();

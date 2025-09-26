@@ -9,6 +9,6 @@
     { "path": "../../packages/auth-client" },
     { "path": "../../packages/middlewares" },
     { "path": "../../packages/logger" },
-
+    { "path": "../../packages/utils" }
   ]
 }

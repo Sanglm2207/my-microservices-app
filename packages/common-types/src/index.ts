@@ -36,4 +36,5 @@ export interface RegisterRequestBody {
     email: string;
     password: string;
     name?: string;
+    status: 'PENDING' | 'ACTIVE' | 'FAILED'; // Trạng thái đăng ký
 }

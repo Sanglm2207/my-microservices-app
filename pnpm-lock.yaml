@@ -49,6 +49,9 @@ importers:
       redis:
         specifier: ^5.8.2
         version: 5.8.2
+      utils:
+        specifier: workspace:^
+        version: link:../../packages/utils
     devDependencies:
       '@types/cookie-parser':
         specifier: ^1.4.6
@@ -119,6 +122,9 @@ importers:
       swagger-docs:
         specifier: workspace:*
         version: link:../../packages/swagger-docs
+      utils:
+        specifier: workspace:^
+        version: link:../../packages/utils
       validation:
         specifier: workspace:*
         version: link:../../packages/validation
@@ -192,6 +198,12 @@ importers:
       sharp:
         specifier: ^0.33.1
         version: 0.33.1
+      swagger-docs:
+        specifier: workspace:*
+        version: link:../../packages/swagger-docs
+      utils:
+        specifier: workspace:^
+        version: link:../../packages/utils
     devDependencies:
       '@types/express':
         specifier: ^4.17.21
@@ -232,9 +244,15 @@ importers:
       logger:
         specifier: workspace:*
         version: link:../../packages/logger
+      message-producer:
+        specifier: workspace:*
+        version: link:../../packages/message-producer
       nodemailer:
         specifier: ^6.9.8
         version: 6.9.8
+      utils:
+        specifier: workspace:^
+        version: link:../../packages/utils
       ws:
         specifier: ^8.16.0
         version: 8.16.0
@@ -302,9 +320,15 @@ importers:
       middlewares:
         specifier: workspace:^
         version: link:../../packages/middlewares
+      swagger-docs:
+        specifier: workspace:*
+        version: link:../../packages/swagger-docs
       tsconfig:
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      utils:
+        specifier: workspace:^
+        version: link:../../packages/utils
       validation:
         specifier: workspace:^
         version: link:../../packages/validation
@@ -496,6 +520,16 @@ importers:
         version: link:../tsconfig
 
   packages/tsconfig: {}
+
+  packages/utils:
+    dependencies:
+      logger:
+        specifier: workspace:*
+        version: link:../logger
+    devDependencies:
+      tsconfig:
+        specifier: workspace:*
+        version: link:../tsconfig
 
   packages/validation:
     dependencies:

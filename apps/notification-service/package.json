@@ -12,6 +12,8 @@
     "express": "^4.18.2",
     "logger": "workspace:*",
     "nodemailer": "^6.9.8",
+    "utils": "workspace:^",
+    "message-producer": "workspace:*",
     "ws": "^8.16.0"
   },
   "devDependencies": {

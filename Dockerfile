@@ -1,37 +1,42 @@
-# ---- Base Stage ----
-# Sử dụng một base image Node.js gọn nhẹ
+# Stage 1: Base - Nền tảng chung
 FROM node:18-alpine AS base
 WORKDIR /app
+# Cài đặt pnpm toàn cục
+RUN npm install -g pnpm
 
-# ---- Dependencies Stage ----
-# Stage này chỉ để cài đặt dependencies và tận dụng Docker layer caching
-FROM base AS dependencies
-# Copy package.json và lock file của toàn bộ monorepo
+# Stage 2: Dependencies - Chỉ cài đặt dependencies của production
+FROM base AS prod-deps
+# Chỉ copy các file cần thiết để cài đặt dependencies
 COPY package.json pnpm-lock.yaml ./
-# Copy package.json của từng app và package
-COPY apps apps
-COPY packages packages
-# Cài đặt tất cả dependencies bằng pnpm
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+COPY apps /app/apps
+COPY packages /app/packages
+# Cài đặt CHỈ dependencies của production cho toàn bộ workspace
+RUN pnpm install --prod --frozen-lockfile
 
-# ---- Builder Stage ----
-# Stage này để build code TypeScript thành JavaScript
+# Stage 3: Builder - Cài đặt devDependencies và build code
 FROM base AS builder
-# Copy dependencies đã được cài đặt từ stage trước
-COPY --from=dependencies /app/node_modules ./node_modules
-# Copy toàn bộ source code
+# Copy source code và các file config
 COPY . .
+# Cài đặt TẤT CẢ dependencies (bao gồm cả devDependencies)
+RUN pnpm install --frozen-lockfile
 # Chạy lệnh build của Turborepo
-RUN npm install -g pnpm && pnpm turbo build
+RUN pnpm turbo build
 
-# ---- Runner Stage ----
-# Đây là image cuối cùng, gọn nhẹ nhất có thể để chạy ứng dụng
-FROM base AS runner
+# Stage 4: Runner - Image cuối cùng để chạy ứng dụng
+FROM node:18-alpine AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 
-# Copy các file cần thiết từ các stage trước
-COPY --from=dependencies /app/pnpm-lock.yaml ./
-COPY --from=builder /app .
+# Copy các dependencies của production đã được cài đặt ở stage 'prod-deps'
+COPY --from=prod-deps /app/node_modules ./node_modules
 
-# Lệnh CMD mặc định, sẽ bị ghi đè bởi docker-compose
-CMD ["node", "apps/api-gateway/dist/index.js"]
+# Copy code JavaScript đã được build từ stage 'builder'
+# Chỉ copy các thư mục 'dist' bên trong 'apps' và 'packages'
+COPY --from=builder /app/apps /app/apps
+COPY --from=builder /app/packages /app/packages
+
+# Expose port (có thể bị ghi đè bởi docker-compose nhưng là good practice)
+EXPOSE 4000 4001 4002 4003 4004
+
+# Lệnh CMD mặc định, sẽ bị ghi đè bởi docker-compose.yml
+CMD ["node", "apps/api-gateway/dist/src/index.js"]

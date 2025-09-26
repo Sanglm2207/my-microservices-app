@@ -10,8 +10,8 @@
     "db:studio": "dotenv -e .env -- prisma studio --schema=../../packages/database/prisma/schema.prisma"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
     "amqplib": "^0.10.3",
+    "bcrypt": "^5.1.1",
     "cache": "workspace:*",
     "common-types": "workspace:*",
     "cookie-parser": "^1.4.6",
@@ -24,6 +24,7 @@
     "message-producer": "workspace:*",
     "middlewares": "workspace:*",
     "swagger-docs": "workspace:*",
+    "utils": "workspace:^",
     "validation": "workspace:*",
     "zod": "^3.22.4"
   },

@@ -11,6 +11,8 @@
     { "path": "../../packages/validation" },
     { "path": "../../packages/middlewares" },
     { "path": "../../packages/logger" },
-    { "path": "../../packages/message-producer" }
+    { "path": "../../packages/message-producer" },
+    { "path": "../../packages/utils" },
+    { "path": "../../packages/swagger-docs" }
   ]
 }

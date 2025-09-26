@@ -15,10 +15,10 @@
     "express": "^4.18.2",
     "express-rate-limit": "^8.1.0",
     "http-proxy-middleware": "^2.0.6",
+    "logger": "workspace:*",
     "rate-limit-redis": "^4.2.2",
     "redis": "^5.8.2",
-    "logger": "workspace:*"
-
+    "utils": "workspace:^"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.6",

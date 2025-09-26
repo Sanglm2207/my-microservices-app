@@ -5,6 +5,9 @@
   },
   "include": ["src/**/*.ts"],
   "references": [
-    { "path": "../../packages/logger" }
+    { "path": "../../packages/logger" },
+    { "path": "../../packages/utils" },
+    { "path": "../../packages/message-producer" }
+
   ]
 }

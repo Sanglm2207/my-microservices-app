@@ -4,7 +4,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../config';
 import { LoginRequestBody, RegisterRequestBody } from 'common-types';
-import { publishAccountCreatedEvent, publishPasswordResetRequestedEvent, publishVerificationEmailRequestedEvent } from 'message-producer';
+import {
+    publishAccountPendingEvent,
+    publishPasswordResetRequestedEvent,
+} from 'message-producer';
+
 import { randomBytes } from 'crypto';
 
 /**
@@ -16,19 +20,20 @@ export const registerUser = async (
     const { email, password, name } = userData;
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
-        data: { email, password: hashedPassword, name },
+        data: {
+            email,
+            password: hashedPassword,
+            name,
+            status: 'PENDING', // Mặc định trạng thái là PENDING
+        },
     });
 
     const verificationToken = randomBytes(32).toString('hex');
     await redisClient.set(`verify:${verificationToken}`, newUser.id, 'EX', 86400); // 24 giờ
 
     // Bắn 2 sự kiện riêng biệt
-    await publishAccountCreatedEvent({
+    await publishAccountPendingEvent({
         id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-    });
-    await publishVerificationEmailRequestedEvent({
         email: newUser.email,
         name: newUser.name,
         verificationToken,
@@ -143,7 +148,7 @@ export const requestPasswordReset = async (email: string) => {
     await publishPasswordResetRequestedEvent({
         email: user.email,
         name: user.name,
-        resetToken: tokenHash,
+        resetToken: resetToken,
     });
 };
 
