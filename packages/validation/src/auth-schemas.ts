@@ -35,3 +35,18 @@ export const changePasswordSchema = z.object({
         newPassword: z.string().min(8, 'New password must be at least 8 characters long'),
     }),
 });
+
+// Schema cho việc xác nhận token (bật 2FA hoặc verify khi login)
+export const twoFactorTokenSchema = z.object({
+    body: z.object({
+        token: z.string().length(6, '2FA token must be 6 characters long'),
+    }),
+});
+
+// Schema cho việc verify 2FA khi login
+export const verifyLogin2FASchema = z.object({
+    body: z.object({
+        otpSessionToken: z.string().min(1, 'Session token is required.'),
+        token: z.string().length(6, '2FA token must be 6 characters long'),
+    })
+});

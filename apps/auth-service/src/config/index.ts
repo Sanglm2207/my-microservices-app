@@ -17,6 +17,7 @@ const config = {
     },
     corsOrigin: process.env.CORS_ORIGIN || '*',
     rabbitmqUrl: process.env.RABBITMQ_URL as string,
+    twoFactorEncryptionKey: process.env.TWO_FACTOR_ENCRYPTION_KEY as string,
 };
 
 // Validate essential config

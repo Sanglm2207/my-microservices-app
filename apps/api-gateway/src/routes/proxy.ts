@@ -1,29 +1,30 @@
 import { Router } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { authMiddleware } from '../middlewares/auth.middleware';
-import config from '../config';
-// import { checkRole } from '../middlewares/checkRole';
-import { sensitiveActionRateLimiter } from '../middlewares/rateLimiter';
+import { check2FAMiddleware } from '../middlewares/check2FA.middleware';
 import { checkRole } from '../middlewares/checkRole';
+import { sensitiveActionRateLimiter, generalRateLimiter } from '../middlewares/rateLimiter';
+import config from '../config';
 
 const router: Router = Router();
 
-// --- PROXY CONFIGS ---
-// Tạo các đối tượng proxy có thể tái sử dụng
+const onProxyReqWithUserHeaders = (proxyReq: any, req: any, res: any) => {
+    if (req.user) {
+        proxyReq.setHeader('x-user-id', req.user.userId);
+        proxyReq.setHeader('x-user-email', req.user.email);
+    }
+};
+
 const authProxy = createProxyMiddleware({
     target: config.services.auth,
     changeOrigin: true,
+    onProxyReq: onProxyReqWithUserHeaders,
 });
 
 const userProxy = createProxyMiddleware({
     target: config.services.user,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req, res) => {
-        if (req.user && req.user.userId) {
-            proxyReq.setHeader('x-user-id', req.user.userId);
-            proxyReq.setHeader('x-user-email', req.user.email);
-        }
-    },
+    onProxyReq: onProxyReqWithUserHeaders,
 });
 
 const fileProxy = createProxyMiddleware({
@@ -32,45 +33,28 @@ const fileProxy = createProxyMiddleware({
     pathRewrite: {
         '^/api/v1/files': '/api/v1',
     },
-    onProxyReq: (proxyReq, req, res) => {
-        if (req.user && req.user.userId) {
-            proxyReq.setHeader('x-user-id', req.user.userId);
-            proxyReq.setHeader('x-user-email', req.user.email);
-        }
-    },
+    onProxyReq: onProxyReqWithUserHeaders,
 });
 
-// --- ROUTE DEFINITIONS ---
-
-// Các route AUTH nhạy cảm (cần rate limit nghiêm ngặt)
 router.use(
-    ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password'],
+    ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/auth/2fa/verify', '/auth/verify-email'],
     sensitiveActionRateLimiter,
-    authProxy
+    createProxyMiddleware({ target: config.services.auth, changeOrigin: true })
 );
 
-// Các route AUTH còn lại (yêu cầu đăng nhập, ví dụ: /logout)
-router.use(
-    ['/auth/logout', '/auth/change-password'],
-    authMiddleware,
-    authProxy
-);
-router.use('/auth/refresh', authProxy); // refresh token không cần authMiddleware
+router.use('/auth/refresh', createProxyMiddleware({ target: config.services.auth, changeOrigin: true }));
 
-// Route cho người dùng thường: /users/me
-router.use('/users/me', authMiddleware, userProxy);
+const authenticatedAuthRoutes = Router();
+authenticatedAuthRoutes.use(['/2fa/enable', '/2fa/confirm', '/2fa/disable', '/logout', '/change-password'], authProxy);
+router.use('/auth', generalRateLimiter, authMiddleware, authenticatedAuthRoutes);
 
-// Route cho ADMIN: /users, /users/:id, v.v.
-router.use(
-    '/users',
-    authMiddleware,
-    checkRole(['ADMIN']),
-    userProxy
-);
+const businessRoutes = Router();
+businessRoutes.use('/users/me', userProxy);
+businessRoutes.use('/files', fileProxy);
+router.use(generalRateLimiter, authMiddleware, check2FAMiddleware, businessRoutes);
 
-
-// Các route FILE (yêu cầu đăng nhập)
-router.use('/files', authMiddleware, fileProxy);
-
+const adminRoutes = Router();
+adminRoutes.use('/users', userProxy);
+router.use(generalRateLimiter, authMiddleware, check2FAMiddleware, checkRole(['ADMIN']), adminRoutes);
 
 export default router;

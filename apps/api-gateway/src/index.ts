@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import helmet from 'helmet';
 import config from './config';
 import proxyRoutes from './routes/proxy';
 import { generalRateLimiter, getRateLimitRedisClient } from './middlewares/rateLimiter';
@@ -12,9 +13,10 @@ const app = express();
 const server = http.createServer(app);
 
 // Middlewares
+app.use(helmet()); // Security headers
 app.use(cors({ origin: config.corsOrigin, credentials: true }));
 app.use(cookieParser());
-app.use('/api/v1', generalRateLimiter);
+// app.use('/api/v1', generalRateLimiter);
 
 // Routes
 app.get('/health', (req, res) => res.status(200).send('API Gateway is healthy!'));

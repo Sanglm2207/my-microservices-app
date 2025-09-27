@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as authController from '../controllers/auth.controller';
 import { validate } from 'middlewares';
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from 'validation';
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema, twoFactorTokenSchema, verifyLogin2FASchema } from 'validation';
 
 const router: Router = Router();
 
@@ -88,5 +88,13 @@ router.post(
     validate(changePasswordSchema),
     authController.changePassword
 );
+
+// Luồng quản lý 2FA (yêu cầu đã đăng nhập, sẽ được bảo vệ bởi Gateway)
+router.post('/2fa/enable', authController.enable2FA);
+router.post('/2fa/confirm', validate(twoFactorTokenSchema), authController.confirm2FA);
+
+// Luồng xác thực 2FA khi đăng nhập (không yêu cầu JWT)
+router.post('/2fa/verify', validate(verifyLogin2FASchema), authController.verify2FA);
+
 
 export default router;

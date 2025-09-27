@@ -19,6 +19,7 @@ export interface JWTPayload {
     userId: string;
     role: 'USER' | 'ADMIN';
     email: string;
+    isTwoFactorAuthenticated: boolean
 }
 
 /**

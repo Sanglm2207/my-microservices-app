@@ -2,14 +2,21 @@ import { prisma, User, Role } from 'database';
 import { redisClient } from 'cache';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import * as speakeasy from 'speakeasy';
+import * as QRCode from 'qrcode';
+import * as CryptoJS from 'crypto-js';
 import config from '../config';
-import { LoginRequestBody, RegisterRequestBody } from 'common-types';
+import { JWTPayload, LoginRequestBody, RegisterRequestBody } from 'common-types';
 import {
     publishAccountPendingEvent,
     publishPasswordResetRequestedEvent,
 } from 'message-producer';
 
 import { randomBytes } from 'crypto';
+
+const encrypt = (text: string) => CryptoJS.AES.encrypt(text, config.twoFactorEncryptionKey).toString();
+const decrypt = (ciphertext: string) => CryptoJS.AES.decrypt(ciphertext, config.twoFactorEncryptionKey).toString(CryptoJS.enc.Utf8);
+
 
 /**
  * Đăng ký người dùng mới
@@ -66,20 +73,115 @@ export const validateUser = async (
     return user;
 };
 
+// ---  2FA ---
+
+
 /**
  * Tạo Access Token và Refresh Token
  */
-export const generateTokens = (user: User) => {
-    const accessTokenPayload = { userId: user.id, role: user.role, email: user.email };
-    const refreshTokenPayload = { userId: user.id, version: user.tokenVersion };
+export const generateTokens = (user: User, isTwoFactorAuthenticated = false) => {
+    // const accessTokenPayload = { userId: user.id, role: user.role, email: user.email };
+    // const refreshTokenPayload = { userId: user.id, version: user.tokenVersion };
+    const isFullyAuthenticated = !user.twoFactorEnabled || isTwoFactorAuthenticated;
+    const accessTokenPayload: JWTPayload = {
+        userId: user.id, role: user.role, email: user.email,
+        isTwoFactorAuthenticated: isFullyAuthenticated,
+    };
 
-    const accessToken = jwt.sign(accessTokenPayload, config.jwt.accessTokenSecret, {
-        expiresIn: config.jwt.accessTokenExpiresIn,
-    });
-    const refreshToken = jwt.sign(refreshTokenPayload, config.jwt.refreshTokenSecret, {
-        expiresIn: config.jwt.refreshTokenExpiresIn,
-    });
+    const accessToken = jwt.sign(accessTokenPayload, config.jwt.accessTokenSecret, { expiresIn: config.jwt.accessTokenExpiresIn });
+    const refreshTokenPayload = { userId: user.id, version: user.tokenVersion };
+    const refreshToken = jwt.sign(refreshTokenPayload, config.jwt.refreshTokenSecret, { expiresIn: config.jwt.refreshTokenExpiresIn });
     return { accessToken, refreshToken };
+};
+
+/**
+ * Bắt đầu quá trình bật 2FA: Tạo secret và QR code
+ */
+export const generateTwoFactorSecret = async (userId: string, email: string) => {
+    const user = await prisma.user.findUnique({
+        where: {
+            id: userId,
+        },
+    });
+    if (!user) throw new Error("User not found");
+    if (user.twoFactorEnabled) throw new Error("2FA is already enabled.");
+
+    const secret = speakeasy.generateSecret({ name: `MyAwesomeApp (${email})` });
+
+    // Lưu secret đã mã hóa vào DB
+    await prisma.user.update({
+        where: { id: userId },
+        data: { twoFactorSecret: encrypt(secret.base32) },
+    });
+
+    const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url!);
+    return { qrCodeDataURL };
+};
+
+/**
+ * Xác thực mã OTP và chính thức kích hoạt 2FA
+ */
+export const verifyAndEnableTwoFactor = async (userId: string, token: string): Promise<boolean> => {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.twoFactorSecret) {
+        throw new Error("2FA setup process was not initiated for this user.");
+    }
+
+    const decryptedSecret = decrypt(user.twoFactorSecret);
+    const isVerified = speakeasy.totp.verify({ secret: decryptedSecret, encoding: 'base32', token, window: 1 });
+
+    if (isVerified) {
+        await prisma.user.update({
+            where: { id: userId },
+            data: { twoFactorEnabled: true },
+        });
+    } else {
+        // Nếu sai, xóa secret để user phải bắt đầu lại từ đầu
+        await prisma.user.update({
+            where: { id: userId },
+            data: { twoFactorSecret: null },
+        });
+    }
+    return isVerified;
+};
+
+/**
+ * Tạo một OTP session token tạm thời khi login với tài khoản có 2FA
+ */
+export const createOtpSession = async (userId: string): Promise<string> => {
+    const otpSessionToken = randomBytes(32).toString('hex');
+    await redisClient.set(`otp-session:${otpSessionToken}`, userId, 'EX', 180); // 3 phút TTL
+    return otpSessionToken;
+};
+
+/**
+ * Xác thực mã 2FA và hoàn tất đăng nhập
+ */
+export const verifyOtpAndLogin = async (otpSessionToken: string, twoFactorToken: string): Promise<User> => {
+    const userId = await redisClient.get(`otp-session:${otpSessionToken}`);
+    if (!userId) {
+        throw new Error('OTP session is invalid or has expired.');
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+        throw new Error('User is not configured for 2FA.');
+    }
+
+    const decryptedSecret = decrypt(user.twoFactorSecret);
+    const isVerified = speakeasy.totp.verify({
+        secret: decryptedSecret,
+        encoding: 'base32',
+        token: twoFactorToken,
+        window: 1,
+    });
+
+    if (!isVerified) {
+        throw new Error('Invalid 2FA token.');
+    }
+
+    await redisClient.del(`otp-session:${otpSessionToken}`);
+    return user;
 };
 
 /**

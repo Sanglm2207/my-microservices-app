@@ -60,7 +60,7 @@ export const sensitiveActionRateLimiter = rateLimit({
         sendCommand: (...args: string[]) => redisClient.sendCommand(args),
     }),
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 5,
+    max: 500,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { message: 'Too many attempts, please try again after a minute' },
